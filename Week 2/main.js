@@ -31,13 +31,7 @@ app.post("/sum", (req, res) => {
 })
 
 app.post("/list", (req, res) => {
-
-    console.log(textList)
-    console.log(req.body.text)
-
     textList.push(req.body.text)
-
-    console.log(textList)
 
     res.json({ list: textList })
 })
