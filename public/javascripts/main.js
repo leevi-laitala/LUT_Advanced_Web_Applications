@@ -1,6 +1,6 @@
 const submitButton = document.getElementById("submit-data")
 const searchButton = document.getElementById("search")
-const deleteButton = document.getElementById("delete-button")
+const deleteButton = document.getElementById("delete-user")
 
 submitButton.addEventListener("click", async function() {
     const n = document.getElementById("input-name").value
