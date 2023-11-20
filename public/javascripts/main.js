@@ -26,6 +26,14 @@ submitButton.addEventListener("click", async function() {
 
 searchButton.addEventListener("click", async function() {
     const n = document.getElementById("search-name").value
+    const p = document.getElementById("found-name")
+    const t = document.getElementById("tasks")
+    
+    const list = document.getElementById("tasks")
+    while (list.hasChildNodes())
+    {
+        list.removeChild(list.firstChild)
+    }
 
     let res = await fetch("/user/" + n)
     let data = await res.json()
@@ -33,8 +41,18 @@ searchButton.addEventListener("click", async function() {
     if (data.name)
     {
         deleteButton.style.display = "block"
+
+        p.innerText = data.name
+
+        for (let task of data.todos)
+        {
+            const nt = document.createElement("ul")
+            nt.innerText = task
+            t.appendChild(nt)
+        }
     } else {
         deleteButton.style.display = "none"
+        p.innerText = data.message
     }
 
     console.log(data)
@@ -45,4 +63,15 @@ deleteButton.addEventListener("click", async function() {
     const res = await fetch("/user/" + n, { method: "DELETE" })
 
     console.log(await res.json())
+
+
+    document.getElementById("search-name").value = ""
+    document.getElementById("found-name").innerText = ""
+    deleteButton.style.display = "none"
+
+    const list = document.getElementById("tasks")
+    while (list.hasChildNodes())
+    {
+        list.removeChild(list.firstChild)
+    }
 })

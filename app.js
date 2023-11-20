@@ -44,7 +44,8 @@ app.get('/user/:id', (req, res) => {
     {
         if (i.name == name)
         {
-            res.json({ name: i.name, todos: i.tasks })
+            console.log({ name: i.name, todos: i.todos })
+            res.json({ name: i.name, todos: i.todos })
             return
         }
     }
