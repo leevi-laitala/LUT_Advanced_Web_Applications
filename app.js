@@ -28,13 +28,13 @@ app.post('/todo', (req, res) => {
         if (i.name == req.body.name)
         {
             i.todos.push(req.body.task)
-            res.json({ message: "Task added!" })
+            res.json({ message: "Todo added" })
             return
         }
     }
     
     tasks.push({ name: req.body.name, todos: [req.body.task] })
-    res.json({ message: "User added!" })
+    res.json({ message: "User added" })
 })
 
 app.get('/user/:id', (req, res) => {
