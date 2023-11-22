@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
 
 var app = express();
 
@@ -19,54 +20,31 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.use('/users', usersRouter);
 
-let tasks = []
+let foodList = [
+    { name: "pasta", instructions: ["mix ingredients"], ingredients: ["flour", "egg"]},
+    { name: "pizza", instructions: ["mix", "cook"], ingredients: ["flour", "egg", "i think"]}
+]
 
-app.post('/todo', (req, res) => {
-    for (let i of tasks)
+app.get("/recipe/:food", (req, res) => {
+    let foodname = req.params.food 
+
+    for (let food of foodList)
     {
-        if (i.name == req.body.name)
+        if (food.name === foodname)
         {
-            i.todos.push(req.body.task)
-            res.json({ message: "Todo added" })
+            res.json({ name: foodname, instructions: food.instructions, ingredients: food.ingredients })
             return
         }
     }
-    
-    tasks.push({ name: req.body.name, todos: [req.body.task] })
-    res.json({ message: "User added" })
+
+    res.json({ error: "Food not found" })
 })
 
-app.get('/user/:id', (req, res) => {
-    const name = req.params["id"]
-
-    for (let i of tasks)
-    {
-        if (i.name == name)
-        {
-            console.log({ name: i.name, todos: i.todos })
-            res.json({ name: i.name, todos: i.todos })
-            return
-        }
-    }
-
-    res.json({ message: "User not found" })
-})
-
-app.delete("/user/:id", (req, res) => {
-    const name = req.params["id"]
-
-    for (let i = 0; i < tasks.length; i++)
-    {
-        if (tasks[i].name === name)
-        {
-            tasks.splice(i, 1)
-            res.json({ message: "User deleted" })
-            return
-        }
-    }
-    
-    res.json({ message: "User not found" })
+app.post("/recipe/", (req, res) => {
+    foodList.push(req.body)
+    res.json(req.body)
 })
 
 // catch 404 and forward to error handler

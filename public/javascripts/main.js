@@ -1,77 +1,81 @@
-const submitButton = document.getElementById("submit-data")
-const searchButton = document.getElementById("search")
-const deleteButton = document.getElementById("delete-user")
+const addingredientButton = document.getElementById("add-ingredient")
+const addinstructionButton = document.getElementById("add-instruction")
+const submitButton = document.getElementById("submit")
+
+const nametextInput = document.getElementById("name-text")
+const ingredientsInput = document.getElementById("ingredients-text")
+const instructionsInput = document.getElementById("instructions-text")
+
+const viewRecipe = document.getElementById("recipe-name")
+const viewIngredients = document.getElementById("ingredients-list")
+const viewInstructions = document.getElementById("instructions-list")
+
+let currentIngredients = []
+let currentInstructions = []
+
+document.addEventListener("DOMContentLoaded", loadRecipe("pizza"))
+
+addingredientButton.addEventListener("click", function() {
+    currentIngredients.push(ingredientsInput.value)
+    ingredientsInput.value = ""
+})
+
+addinstructionButton.addEventListener("click", function() {
+    currentInstructions.push(instructionsInput.value)
+    instructionsInput.value = ""
+})
 
 submitButton.addEventListener("click", async function() {
-    const n = document.getElementById("input-name").value
-    const t = document.getElementById("input-task").value
-
-    const data = {
-        name: n,
-        task: t
-    }
-
-    let res = await fetch("/todo", {
+    const res = await fetch("/recipe/", {
         method: "POST",
-        headers: { "Content-Type": "application/json; charset=UTF-8" },
-        body: JSON.stringify(data)
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: nametextInput.value,
+            ingredients: currentIngredients,
+            instructions: currentInstructions
+            })
     })
 
-    let responsedata = await res.json()
-
-    const returnmessage = document.getElementById("return-message")
-    returnmessage.textContent = responsedata.message
-})
-
-
-searchButton.addEventListener("click", async function() {
-    const n = document.getElementById("search-name").value
-    const p = document.getElementById("found-name")
-    const t = document.getElementById("tasks")
+    const data = await res.json()
     
-    const list = document.getElementById("tasks")
-    while (list.hasChildNodes())
-    {
-        list.removeChild(list.firstChild)
-    }
-
-    let res = await fetch("/user/" + n)
-    let data = await res.json()
-
-    if (data.name)
-    {
-        deleteButton.style.display = "block"
-
-        p.innerText = data.name
-
-        for (let task of data.todos)
-        {
-            const nt = document.createElement("ul")
-            nt.innerText = task
-            t.appendChild(nt)
-        }
-    } else {
-        deleteButton.style.display = "none"
-        p.innerText = data.message
-    }
-
-    console.log(data)
+    loadRecipe(nametextInput.value)
 })
 
-deleteButton.addEventListener("click", async function() {
-    const n = document.getElementById("search-name").value
-    const res = await fetch("/user/" + n, { method: "DELETE" })
-
-    console.log(await res.json())
-
-
-    document.getElementById("search-name").value = ""
-    document.getElementById("found-name").innerText = ""
-    deleteButton.style.display = "none"
-
-    const list = document.getElementById("tasks")
-    while (list.hasChildNodes())
+function getRecipe(data)
+{
+    // Clear previous lists
+    while(viewIngredients.hasChildNodes()) 
     {
-        list.removeChild(list.firstChild)
+        viewIngredients.removeChild(viewIngredients.firstChild)
     }
-})
+
+    while(viewInstructions.hasChildNodes())
+    {
+        viewInstructions.removeChild(viewInstructions.firstChild)
+    }
+
+    // Fill cleared lists
+    for (let ingredient of data.ingredients)
+    {
+        let li = document.createElement("li")
+        li.textContent = ingredient
+        viewIngredients.appendChild(li)
+    }
+
+    for (let instruction of data.instructions)
+    {
+        let li = document.createElement("li")
+        li.textContent = instruction
+        viewInstructions.appendChild(li)
+    }
+    
+    viewRecipe.innerText = data.name
+}
+
+async function loadRecipe(name)
+{
+    const res = await fetch("/recipe/" + name)
+    const data = await res.json()
+
+    getRecipe(data)
+}
