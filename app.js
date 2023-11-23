@@ -39,7 +39,7 @@ app.get("/recipe/:food", (req, res) => {
         }
     }
 
-    res.json({ error: "Food not found" })
+    res.json({ name: foodname, instructions: [], ingredients: [] })
 })
 
 app.post("/recipe/", (req, res) => {

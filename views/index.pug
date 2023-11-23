@@ -1,6 +1,10 @@
 extends layout
 
 block content
+    nav
+        .nav-wrapper
+            a(href="#").brand-logo Jeerock
+
     #container
         #viewrecipe.col
             h1#recipe-name
@@ -16,12 +20,12 @@ block content
             input(type="text")#name-text
 
             textarea#ingredients-text
-            button(type="button")#add-ingredient Add ingredient
+            button(type="button")#add-ingredient.btn Add ingredient
 
             h4 Instructions
             textarea#instructions-text
-            button(type="button")#add-instruction Add instruction
+            button(type="button")#add-instruction.btn Add instruction
 
             input(type='file', accept='image/*', multiple)#image-input
 
-            button(type="submit")#submit Submit
+            button(type="submit")#submit.btn Submit
