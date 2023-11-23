@@ -23,8 +23,8 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 let foodList = [
-    { name: "pasta", instructions: ["mix ingredients"], ingredients: ["flour", "egg"]},
-    { name: "pizza", instructions: ["mix", "cook"], ingredients: ["flour", "egg", "i think"]}
+    { name: "Pasta", instructions: ["mix ingredients"], ingredients: ["flour", "egg"]},
+    { name: "Pizza", instructions: ["mix", "cook"], ingredients: ["flour", "egg", "i think"]}
 ]
 
 app.get("/recipe/:food", (req, res) => {
@@ -45,6 +45,10 @@ app.get("/recipe/:food", (req, res) => {
 app.post("/recipe/", (req, res) => {
     foodList.push(req.body)
     res.json(req.body)
+})
+
+app.post("/images", (req, res) => {
+    res.send("Hi! Image received!")
 })
 
 // catch 404 and forward to error handler

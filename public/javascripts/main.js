@@ -5,15 +5,17 @@ const submitButton = document.getElementById("submit")
 const nametextInput = document.getElementById("name-text")
 const ingredientsInput = document.getElementById("ingredients-text")
 const instructionsInput = document.getElementById("instructions-text")
+const imageInput = document.getElementById("image-input")
 
 const viewRecipe = document.getElementById("recipe-name")
 const viewIngredients = document.getElementById("ingredients-list")
 const viewInstructions = document.getElementById("instructions-list")
 
+
 let currentIngredients = []
 let currentInstructions = []
 
-document.addEventListener("DOMContentLoaded", loadRecipe("pizza"))
+document.addEventListener("DOMContentLoaded", loadRecipe("Pizza"))
 
 addingredientButton.addEventListener("click", function() {
     currentIngredients.push(ingredientsInput.value)
@@ -40,6 +42,21 @@ submitButton.addEventListener("click", async function() {
     
     loadRecipe(nametextInput.value)
 })
+
+async function addImage()
+{
+    const fd = new FormData()
+
+    for (let img of imageInput.files)
+    {
+        fd.append("images", img)
+    }
+
+    await fetch("/images", {
+        method: "POST",
+        body: fd
+    })
+}
 
 function getRecipe(data)
 {
