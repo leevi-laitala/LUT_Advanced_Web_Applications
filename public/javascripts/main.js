@@ -41,6 +41,7 @@ submitButton.addEventListener("click", async function() {
     const data = await res.json()
     
     loadRecipe(nametextInput.value)
+    addImage()
 })
 
 async function addImage()
