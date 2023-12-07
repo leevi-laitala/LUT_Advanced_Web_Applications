@@ -1,4 +1,4 @@
-// Followed boilerplate instructions on:
+// Followed these instructions on the environment setup:
 // https://www.digitalocean.com/community/tutorials/setting-up-a-node-project-with-typescript
 
 import express from "express";
@@ -29,9 +29,9 @@ interface Plane extends Vehicle {
 
 let vehicles: Vehicle[] = [];
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+//app.get("/", (req, res) => {
+//  res.send("Hello World!");
+//});
 
 app.get("/hello", (req, res) => {
   res.send("Hello world");
@@ -52,7 +52,6 @@ app.post("/vehicle/add", (req, res) => {
 
     vehicles.push(vehicle)
 
-    console.log(vehicles);
     res.status(201).send("Vehicle added");
 });
 
