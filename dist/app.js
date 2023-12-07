@@ -1,5 +1,5 @@
 "use strict";
-// Followed boilerplate instructions on:
+// Followed these instructions on the environment setup:
 // https://www.digitalocean.com/community/tutorials/setting-up-a-node-project-with-typescript
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -10,9 +10,9 @@ const app = (0, express_1.default)();
 const port = 3000;
 app.use(express_1.default.json());
 let vehicles = [];
-app.get("/", (req, res) => {
-    res.send("Hello World!");
-});
+//app.get("/", (req, res) => {
+//  res.send("Hello World!");
+//});
 app.get("/hello", (req, res) => {
     res.send("Hello world");
 });
@@ -31,20 +31,14 @@ app.post("/vehicle/add", (req, res) => {
         vehicle = req.body;
     }
     vehicles.push(vehicle);
-    console.log(vehicles);
     res.status(201).send("Vehicle added");
 });
 app.get("/vehicle/search/:model", (req, res) => {
     let model = req.params["model"];
     for (let vehicle of vehicles) {
         if (vehicle.model === model) {
-            let found = {
-                model: vehicle.model,
-                color: vehicle.color,
-                year: vehicle.year,
-                power: vehicle.power
-            };
-            res.send(found);
+            res.send(vehicle);
+            return;
         }
     }
     res.status(404);

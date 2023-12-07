@@ -60,7 +60,7 @@ app.get("/vehicle/search/:model", (req, res) => {
 
     for (let vehicle of vehicles) {
         if (vehicle.model === model) {
-            res.send(found);
+            res.send(vehicle);
             return;
         }
     }
