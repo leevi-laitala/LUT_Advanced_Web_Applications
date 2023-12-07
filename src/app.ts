@@ -61,12 +61,6 @@ app.get("/vehicle/search/:model", (req, res) => {
 
     for (let vehicle of vehicles) {
         if (vehicle.model === model) {
-            let found : Vehicle = {
-                model: vehicle.model,
-                color: vehicle.color,
-                year: vehicle.year,
-                power: vehicle.power
-            };
             res.send(found);
             return;
         }
