@@ -62,6 +62,11 @@ app.post("/api/user/register", (req, res) => {
     }
     const username = req.body.username;
     const password = req.body.password;
+    const userexists = users.find(u => u.username === username);
+    if (userexists) {
+        res.status(400).send("User exists.");
+        return;
+    }
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
     const idlen = 5;
@@ -117,9 +122,13 @@ app.post("/api/todos", (req, res) => {
     else {
         foundlist.todos.push(todotext);
     }
-    res.status(200).send("Todo added.");
+    res.status(200).send(todos.find(t => t.id === req.session.user.id));
 });
 app.get("/api/todos/list", (req, res) => {
+    if (!req.session.user) {
+        res.status(401).send("Unauthorized");
+        return;
+    }
     res.send(todos);
 });
 app.get("/", (req, res) => {

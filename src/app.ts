@@ -164,7 +164,7 @@ app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response
         foundlist.todos.push(todotext);
     }
 
-    res.status(200).send("Todo added.");
+    res.status(200).send(todos.find(t => t.id === req.session.user.id));
 });
 
 app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
