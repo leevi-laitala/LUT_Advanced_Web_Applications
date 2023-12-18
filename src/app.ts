@@ -20,16 +20,19 @@ const parser = require("body-parser")
 var bcrypt = require("bcryptjs");
 
 
-
-
-
 interface User {
     id: number;
     username: string;
     password: string;
 }
 
+interface Todolist {
+    id: number;
+    todos: string[];
+}
+
 let users: User[] = [];
+let todos: Todolist[] = [];
 
 //function initAuth(passport) {
 //    function authUser(username, password, done) {
@@ -126,14 +129,39 @@ app.get("/api/user/list", (req: Request & { session: CustomSession }, res: Respo
 });
 
 app.get("/api/secret", (req: Request & { session: CustomSession }, res: Response) => {
-    console.log(req.session);
-
     if (!req.session.user) {
         res.status(401).send("Unauthorized");
         return;
     }
         
     res.status(200).send("Authorized");
+});
+
+app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response) => {
+    if (!req.session.user) {
+        res.status(401).send("Unauthorized");
+        return;
+    }
+
+    const foundlist = todos.find(t => t.id === req.session.user.id);
+    const todotext = req.body.todo;
+
+    if (!foundlist) {
+        const newtodo: Todolist = {
+            id: req.session.user.id,
+            todos: [todotext],
+        };
+
+        todos.push(newtodo);
+    } else {
+        foundlist.todos.push(todotext);
+    }
+
+    res.status(200).send("Todo added.");
+});
+
+app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
+    res.send(todos);
 });
 
 app.get("/", (req, res) => {

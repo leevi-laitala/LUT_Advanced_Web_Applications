@@ -16,6 +16,7 @@ const parser = require("body-parser");
 //const LocalStrategy = require("passport-local").Strategy
 var bcrypt = require("bcryptjs");
 let users = [];
+let todos = [];
 //function initAuth(passport) {
 //    function authUser(username, password, done) {
 //        const user = users.find((user) => { user.username === username })
@@ -93,12 +94,33 @@ app.get("/api/user/list", (req, res) => {
     res.status(200).send(users);
 });
 app.get("/api/secret", (req, res) => {
-    console.log(req.session);
     if (!req.session.user) {
         res.status(401).send("Unauthorized");
         return;
     }
     res.status(200).send("Authorized");
+});
+app.post("/api/todos", (req, res) => {
+    if (!req.session.user) {
+        res.status(401).send("Unauthorized");
+        return;
+    }
+    const foundlist = todos.find(t => t.id === req.session.user.id);
+    const todotext = req.body.todo;
+    if (!foundlist) {
+        const newtodo = {
+            id: req.session.user.id,
+            todos: [todotext],
+        };
+        todos.push(newtodo);
+    }
+    else {
+        foundlist.todos.push(todotext);
+    }
+    res.status(200).send("Todo added.");
+});
+app.get("/api/todos/list", (req, res) => {
+    res.send(todos);
 });
 app.get("/", (req, res) => {
     res.send("Hello world");
