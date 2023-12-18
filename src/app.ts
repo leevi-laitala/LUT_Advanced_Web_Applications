@@ -90,6 +90,7 @@ app.post("/api/user/register", (req: Request & { session: CustomSession }, res: 
 
     if (userexists) {
         res.status(400).send("User exists.");
+        return;
     }
 
     const salt = bcrypt.genSaltSync(10);
