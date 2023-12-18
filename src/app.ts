@@ -86,6 +86,12 @@ app.post("/api/user/register", (req: Request & { session: CustomSession }, res: 
     const username = req.body.username;
     const password = req.body.password;
 
+    const userexists = users.find(u => u.username === username);
+
+    if (userexists) {
+        res.status(400).send("User exists.");
+    }
+
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
 
@@ -161,6 +167,11 @@ app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response
 });
 
 app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
+    if (!req.session.user) {
+        res.status(401).send("Unauthorized");
+        return;
+    }
+
     res.send(todos);
 });
 
