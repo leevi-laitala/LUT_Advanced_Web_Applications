@@ -71,7 +71,7 @@ app.post("/api/user/register", (req, res) => {
     }
     const user = { id: id, username: username, password: hash };
     users.push(user);
-    res.send(users);
+    res.send(user);
 });
 app.post("/api/user/login", (req, res) => {
     if (req.session.user) {
@@ -90,10 +90,6 @@ app.post("/api/user/login", (req, res) => {
     }
 });
 app.get("/api/user/list", (req, res) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
     res.status(200).send(users);
 });
 app.get("/api/secret", (req, res) => {

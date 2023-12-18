@@ -99,7 +99,7 @@ app.post("/api/user/register", (req: Request & { session: CustomSession }, res: 
     const user: User = { id: id, username: username, password: hash };
     users.push(user as User);
 
-    res.send(users);
+    res.send(user);
 });
 
 app.post("/api/user/login", (req: Request & { session: CustomSession }, res: Response) => {
@@ -122,11 +122,6 @@ app.post("/api/user/login", (req: Request & { session: CustomSession }, res: Res
 });
 
 app.get("/api/user/list", (req: Request & { session: CustomSession }, res: Response) => {
-    if (!req.session.user) { 
-        res.status(401).send("Unauthorized");
-        return;
-    }
-
     res.status(200).send(users);
 });
 
