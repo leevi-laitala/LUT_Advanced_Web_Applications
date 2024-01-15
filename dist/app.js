@@ -1,5 +1,14 @@
 "use strict";
 //import express from "express";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -8,43 +17,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // Property 'user' does not exist on type 'Session & Partial<SessionData>'.
 const express_1 = __importDefault(require("express"));
 const express_session_1 = __importDefault(require("express-session"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const model_user_1 = require("./model-user");
+const express_validator_1 = require("express-validator");
+const passport_1 = __importDefault(require("passport"));
+const passport_jwt_1 = require("passport-jwt");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+passport_1.default.initialize();
+const mongoose = require("mongoose");
+mongoose.connect("mongodb://127.0.0.1:27017/testdb");
+const db = mongoose.connection;
 const app = (0, express_1.default)();
 const port = 3000;
-//const session = require("express-session");
-//const passport = require("passport")
 const parser = require("body-parser");
-//const LocalStrategy = require("passport-local").Strategy
 var bcrypt = require("bcryptjs");
-let users = [];
-let todos = [];
-//function initAuth(passport) {
-//    function authUser(username, password, done) {
-//        const user = users.find((user) => { user.username === username })
-//        if (!user) {
-//            console.log("User not found");
-//            return done(null, false);
-//        }
-//        
-//        if (bcrypt.compareSync(password, user.password)) {
-//            console.log("user: " + user.username + " logged in!");
-//            return done(null, user);
-//        } else {
-//            console.log("Password incorrect");
-//            return done(null, false);
-//        }
-//    }
-//    
-//    passport.use(new LocalStrategy(authenticateUser));
-//    passport.serializeUser((user, done) => done(null, user.id));
-//    passport.deserializeUser((id, done) => {
-//        return done(null, users.find((user) => { user.id === id }));
-//    })
-//}
-//function checkAuth(res, req, next) {
-//    return (res.isAuthenticated()) ? res.redirect("/") : next();
-//}
-//
-//initAuth(passport);
 app.use(express_1.default.json());
 app.use(parser.json());
 app.use(parser.urlencoded({ extended: true }));
@@ -53,84 +39,118 @@ app.use((0, express_session_1.default)({
     resave: false,
     saveUninitialized: false
 }));
-//app.use(passport.initialize());
-//app.use(passport.session());
-app.post("/api/user/register", (req, res) => {
-    if (req.session.user) {
-        res.redirect("/");
-        return;
+const emailValidate = (0, express_validator_1.body)("email").trim().isEmail();
+const pwdValidate = (0, express_validator_1.body)("password").isStrongPassword({
+    minLength: 8,
+    minUppercase: 1,
+    minLowercase: 1,
+    minNumbers: 1,
+    minSymbols: 1
+});
+app.post("/api/user/register", emailValidate, pwdValidate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // Check if user exists
+    let founduser = yield model_user_1.user.findOne({ email: req.body.email }).exec();
+    if (founduser) {
+        return res.status(400).json({ email: "Email already in use." });
     }
-    const username = req.body.username;
-    const password = req.body.password;
-    const userexists = users.find(u => u.username === username);
-    if (userexists) {
-        res.status(400).send("User exists.");
-        return;
+    // Check if validations were successful
+    const validationError = (0, express_validator_1.validationResult)(req);
+    if (!validationError.isEmpty()) {
+        return res.status(400).json({ errors: validationError });
     }
+    // Gen pwd hash and save user to db
     const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
-    const idlen = 5;
-    let id = Math.floor(Math.random() * 10);
-    for (let i = 0; i < idlen; i++) {
-        id *= 10;
-        id += Math.floor(Math.random() * 10);
+    const hash = bcrypt.hashSync(req.body.password, salt);
+    yield model_user_1.user.create({ email: req.body.email, password: hash });
+    return res.status(200).send();
+}));
+function validateToken(req, res, next) {
+    passport_1.default.authenticate("jwt", {
+        session: false
+    }, (err, verifiedUser) => {
+        console.log(err);
+        console.log(verifiedUser);
+        if (err || !verifiedUser) {
+            return res.status(401).send();
+        }
+        req.user = verifiedUser;
+        next();
+    })(req, res, next);
+}
+app.post("/api/user/login", emailValidate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const founduser = yield model_user_1.user.findOne({ email: req.body.email }).exec();
+    if (!founduser) {
+        return res.status(403).send("Login failed 1");
     }
-    const user = { id: id, username: username, password: hash };
-    users.push(user);
-    res.send(user);
+    console.log(founduser);
+    console.log(founduser.password);
+    if (!bcrypt.compareSync(req.body.password, founduser.password)) {
+        return res.status(401).send("Login failed 2");
+    }
+    dotenv_1.default.config();
+    const token = jsonwebtoken_1.default.sign({ userId: founduser._id, email: founduser.email }, process.env.SECRET, { expiresIn: "1h" });
+    return res.status(200).json({ success: true, token: token });
+}));
+passport_1.default.use(new passport_jwt_1.Strategy({
+    secretOrKey: process.env.SECRET,
+    jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken()
+}, (token, done) => __awaiter(void 0, void 0, void 0, function* () {
+    const founduser = model_user_1.user.findById(token.id);
+    return done(null, founduser);
+})));
+app.get("/test", validateToken, (req, res) => {
+    console.log(passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken());
+    return res.status(200).send("Success");
 });
-app.post("/api/user/login", (req, res) => {
-    if (req.session.user) {
-        res.redirect("/");
-        return;
-    }
-    const username = req.body.username;
-    const password = req.body.password;
-    const user = users.find(u => u.username === username);
-    if (user && bcrypt.compareSync(password, user.password)) {
-        req.session.user = user;
-        res.status(200).send("Logged in");
-    }
-    else {
-        res.status(401).send("Invalid credentials");
-    }
-});
-app.get("/api/user/list", (req, res) => {
-    res.status(200).send(users);
-});
-app.get("/api/secret", (req, res) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-    res.status(200).send("Authorized");
-});
-app.post("/api/todos", (req, res) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-    const foundlist = todos.find(t => t.id === req.session.user.id);
-    const todotext = req.body.todo;
-    if (!foundlist) {
-        const newtodo = {
-            id: req.session.user.id,
-            todos: [todotext],
-        };
-        todos.push(newtodo);
-    }
-    else {
-        foundlist.todos.push(todotext);
-    }
-    res.status(200).send(todos.find(t => t.id === req.session.user.id));
-});
-app.get("/api/todos/list", (req, res) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-    res.send(todos);
-});
+//app.post("/api/user/login", (req: Request & { session: CustomSession }, res: Response) => {
+//    if (req.session.user) {
+//        res.redirect("/");
+//        return;
+//    }
+//
+//    const username = req.body.username;
+//    const password = req.body.password;
+//
+//    const user = users.find(u => u.username === username);
+//
+//    if (user && bcrypt.compareSync(password, user.password)) {
+//        req.session.user = user;
+//        res.status(200).send("Logged in");
+//    } else {
+//        res.status(401).send("Invalid credentials");
+//    }
+//});
+//app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response) => {
+//    if (!req.session.user) {
+//        res.status(401).send("Unauthorized");
+//        return;
+//    }
+//
+//    const foundlist = todos.find(t => t.id === req.session.user.id);
+//    const todotext = req.body.todo;
+//
+//    if (!foundlist) {
+//        const newtodo: Todolist = {
+//            id: req.session.user.id,
+//            todos: [todotext],
+//        };
+//
+//        todos.push(newtodo);
+//    } else {
+//        foundlist.todos.push(todotext);
+//    }
+//
+//    res.status(200).send(todos.find(t => t.id === req.session.user.id));
+//});
+//
+//app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
+//    if (!req.session.user) {
+//        res.status(401).send("Unauthorized");
+//        return;
+//    }
+//
+//    res.send(todos);
+//});
 app.get("/", (req, res) => {
     res.send("Hello world");
 });

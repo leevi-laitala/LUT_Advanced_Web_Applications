@@ -8,61 +8,28 @@ interface CustomSession extends Session {
     user?: { id: number; username: string; password: string };
 }
 
+import dotenv from "dotenv";
+
+import { user } from "./model-user";
+import { body, ValidationChain, validationResult, ValidationError } from "express-validator";
+
+import passport, { DoneCallback } from "passport";
+import { Strategy, ExtractJwt, StrategyOptions } from "passport-jwt";
+
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+passport.initialize();
+
+const mongoose = require("mongoose");
+mongoose.connect("mongodb://127.0.0.1:27017/testdb");
+const db = mongoose.connection;
 
 const app = express();
 const port = 3000;
 
-//const session = require("express-session");
-//const passport = require("passport")
 const parser = require("body-parser")
-//const LocalStrategy = require("passport-local").Strategy
 
 var bcrypt = require("bcryptjs");
-
-
-interface User {
-    id: number;
-    username: string;
-    password: string;
-}
-
-interface Todolist {
-    id: number;
-    todos: string[];
-}
-
-let users: User[] = [];
-let todos: Todolist[] = [];
-
-//function initAuth(passport) {
-//    function authUser(username, password, done) {
-//        const user = users.find((user) => { user.username === username })
-//        if (!user) {
-//            console.log("User not found");
-//            return done(null, false);
-//        }
-//        
-//        if (bcrypt.compareSync(password, user.password)) {
-//            console.log("user: " + user.username + " logged in!");
-//            return done(null, user);
-//        } else {
-//            console.log("Password incorrect");
-//            return done(null, false);
-//        }
-//    }
-//    
-//    passport.use(new LocalStrategy(authenticateUser));
-//    passport.serializeUser((user, done) => done(null, user.id));
-//    passport.deserializeUser((id, done) => {
-//        return done(null, users.find((user) => { user.id === id }));
-//    })
-//}
-
-//function checkAuth(res, req, next) {
-//    return (res.isAuthenticated()) ? res.redirect("/") : next();
-//}
-//
-//initAuth(passport);
 
 app.use(express.json());
 app.use(parser.json());
@@ -74,107 +41,151 @@ app.use(session({
     saveUninitialized: false
 }));
 
-//app.use(passport.initialize());
-//app.use(passport.session());
 
-app.post("/api/user/register", (req: Request & { session: CustomSession }, res: Response) => {
-    if (req.session.user) {
-        res.redirect("/");
-        return;
+
+const emailValidate: ValidationChain = body("email").trim().isEmail();
+const pwdValidate: ValidationChain = body("password").isStrongPassword({
+    minLength: 8,
+    minUppercase: 1,
+    minLowercase: 1,
+    minNumbers: 1,
+    minSymbols: 1
+})
+
+app.post("/api/user/register", emailValidate, pwdValidate, async (req, res) => {
+    // Check if user exists
+    let founduser = await user.findOne({ email: req.body.email }).exec();
+    if (founduser) {
+        return res.status(400).json({ email: "Email already in use." });
+    }
+    
+    // Check if validations were successful
+    const validationError = validationResult(req);
+    if (!validationError.isEmpty()) {
+        return res.status(400).json({ errors: validationError });
     }
 
-    const username = req.body.username;
-    const password = req.body.password;
-
-    const userexists = users.find(u => u.username === username);
-
-    if (userexists) {
-        res.status(400).send("User exists.");
-        return;
-    }
-
+    // Gen pwd hash and save user to db
     const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
+    const hash = bcrypt.hashSync(req.body.password, salt);
 
-    const idlen = 5;
-
-    let id = Math.floor(Math.random() * 10);
-
-    for (let i = 0; i < idlen; i++)
-    {
-        id *= 10;
-        id += Math.floor(Math.random() * 10);
-    }
-
-    const user: User = { id: id, username: username, password: hash };
-    users.push(user as User);
-
-    res.send(user);
+    await user.create({ email: req.body.email, password: hash });
+    return res.status(200).send();
 });
 
-app.post("/api/user/login", (req: Request & { session: CustomSession }, res: Response) => {
-    if (req.session.user) {
-        res.redirect("/");
-        return;
+//function verifyToken(req, res, next) {
+//    const token = req.header("Authorization");
+//    if (!token) {
+//        return res.status(401).send("Access denied");
+//    }
+//
+//    const decoded = jwt.verify(token, process.env.SECRET);
+//    req.userId = decoded.userId;
+//    next();
+//}
+
+interface RequestUser extends Request {
+    user: JwtPayload
+}
+
+function validateToken(req: RequestUser, res, next) {
+    passport.authenticate("jwt", { 
+        session: false }, 
+        (err, verifiedUser) => {
+            console.log(err);
+            console.log(verifiedUser);
+
+            if (err || !verifiedUser) { return res.status(401).send(); }
+            req.user = verifiedUser;
+            next();
+        }
+    )(req, res, next);
+}
+
+app.post("/api/user/login", emailValidate, async (req, res) => {
+    const founduser = await user.findOne({ email: req.body.email }).exec();
+    if (!founduser) {
+        return res.status(403).send("Login failed 1");
     }
 
-    const username = req.body.username;
-    const password = req.body.password;
+    console.log(founduser);
+    console.log(founduser.password);
 
-    const user = users.find(u => u.username === username);
-
-    if (user && bcrypt.compareSync(password, user.password)) {
-        req.session.user = user;
-        res.status(200).send("Logged in");
-    } else {
-        res.status(401).send("Invalid credentials");
+    if (!bcrypt.compareSync(req.body.password, founduser.password)) {
+        return res.status(401).send("Login failed 2");
     }
+
+    dotenv.config();
+
+    const token = jwt.sign({ userId: founduser._id, email: founduser.email }, process.env.SECRET, { expiresIn: "1h" });
+    return res.status(200).json({ success: true, token: token });
 });
 
-app.get("/api/user/list", (req: Request & { session: CustomSession }, res: Response) => {
-    res.status(200).send(users);
+passport.use(new Strategy(
+    { 
+        secretOrKey: process.env.SECRET,
+        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+    },
+    async (token, done) => {
+        const founduser = user.findById(token.id);
+        return done(null, founduser);
+    }
+));
+
+app.get("/test", validateToken, (req, res) => {
+    return res.status(200).send("Success");
 });
 
-app.get("/api/secret", (req: Request & { session: CustomSession }, res: Response) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-        
-    res.status(200).send("Authorized");
-});
+//app.post("/api/user/login", (req: Request & { session: CustomSession }, res: Response) => {
+//    if (req.session.user) {
+//        res.redirect("/");
+//        return;
+//    }
+//
+//    const username = req.body.username;
+//    const password = req.body.password;
+//
+//    const user = users.find(u => u.username === username);
+//
+//    if (user && bcrypt.compareSync(password, user.password)) {
+//        req.session.user = user;
+//        res.status(200).send("Logged in");
+//    } else {
+//        res.status(401).send("Invalid credentials");
+//    }
+//});
 
-app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-
-    const foundlist = todos.find(t => t.id === req.session.user.id);
-    const todotext = req.body.todo;
-
-    if (!foundlist) {
-        const newtodo: Todolist = {
-            id: req.session.user.id,
-            todos: [todotext],
-        };
-
-        todos.push(newtodo);
-    } else {
-        foundlist.todos.push(todotext);
-    }
-
-    res.status(200).send(todos.find(t => t.id === req.session.user.id));
-});
-
-app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
-    if (!req.session.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-
-    res.send(todos);
-});
+//app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response) => {
+//    if (!req.session.user) {
+//        res.status(401).send("Unauthorized");
+//        return;
+//    }
+//
+//    const foundlist = todos.find(t => t.id === req.session.user.id);
+//    const todotext = req.body.todo;
+//
+//    if (!foundlist) {
+//        const newtodo: Todolist = {
+//            id: req.session.user.id,
+//            todos: [todotext],
+//        };
+//
+//        todos.push(newtodo);
+//    } else {
+//        foundlist.todos.push(todotext);
+//    }
+//
+//    res.status(200).send(todos.find(t => t.id === req.session.user.id));
+//});
+//
+//app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
+//    if (!req.session.user) {
+//        res.status(401).send("Unauthorized");
+//        return;
+//    }
+//
+//    res.send(todos);
+//});
 
 app.get("/", (req, res) => {
   res.send("Hello world");
