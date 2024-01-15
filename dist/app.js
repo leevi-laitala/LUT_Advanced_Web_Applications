@@ -18,6 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const express_session_1 = __importDefault(require("express-session"));
 const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const model_user_1 = require("./model-user");
 const express_validator_1 = require("express-validator");
 const passport_1 = __importDefault(require("passport"));
@@ -87,7 +88,6 @@ app.post("/api/user/login", emailValidate, (req, res) => __awaiter(void 0, void 
     if (!bcrypt.compareSync(req.body.password, founduser.password)) {
         return res.status(401).send("Login failed 2");
     }
-    dotenv_1.default.config();
     const token = jsonwebtoken_1.default.sign({ userId: founduser._id, email: founduser.email }, process.env.SECRET, { expiresIn: "1h" });
     return res.status(200).json({ success: true, token: token });
 }));
@@ -99,7 +99,6 @@ passport_1.default.use(new passport_jwt_1.Strategy({
     return done(null, founduser);
 })));
 app.get("/test", validateToken, (req, res) => {
-    console.log(passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken());
     return res.status(200).send("Success");
 });
 //app.post("/api/user/login", (req: Request & { session: CustomSession }, res: Response) => {

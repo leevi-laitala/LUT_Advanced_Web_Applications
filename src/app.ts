@@ -10,6 +10,9 @@ interface CustomSession extends Session {
 
 import dotenv from "dotenv";
 
+dotenv.config();
+
+
 import { user } from "./model-user";
 import { body, ValidationChain, validationResult, ValidationError } from "express-validator";
 
@@ -114,8 +117,6 @@ app.post("/api/user/login", emailValidate, async (req, res) => {
     if (!bcrypt.compareSync(req.body.password, founduser.password)) {
         return res.status(401).send("Login failed 2");
     }
-
-    dotenv.config();
 
     const token = jwt.sign({ userId: founduser._id, email: founduser.email }, process.env.SECRET, { expiresIn: "1h" });
     return res.status(200).json({ success: true, token: token });
