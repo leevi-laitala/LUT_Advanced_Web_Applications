@@ -163,6 +163,14 @@ app.post("/api/todos", validateToken, async (req: RequestUser, res) => {
     res.status(200).send();
 });
 
+app.get("/api/todos", validateToken, async (req: RequestUser, res) => {
+    const todos = await todo.findOne({ user: req.user._id });
+
+    if (todos) {
+        return res.json({ items: todos.items });
+    }
+})
+
 app.get("/register.html", (req, res) => {
     res.render("register");
 });

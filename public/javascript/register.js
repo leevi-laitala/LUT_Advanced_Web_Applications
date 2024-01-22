@@ -19,10 +19,10 @@ document.getElementById("formRegister").addEventListener("submit", async (event)
             return;
             break;
         case 400:
-            err = "Bad password";
+            err = "Password is not strong enough";
             break;
         case 403:
-            err = "Account with this email already exists";
+            err = "Email already in use";
             break;
         default:
     }

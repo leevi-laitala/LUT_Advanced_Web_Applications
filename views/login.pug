@@ -4,9 +4,9 @@ block content
     h1 Login page
     form(action="/api/user/login", method="post")#formLogin
         label(for="email") Email
-        input(type="text", name="email", required)#email
+        input(type="email", name="email", required)#email
         label(for="pwd") Password
-        input(type="text", name="password", required)#password
+        input(type="password", name="password", required)#password
         button(type="submit")#submit Submit
     p#loginResult
     script(src="/javascript/login.js")

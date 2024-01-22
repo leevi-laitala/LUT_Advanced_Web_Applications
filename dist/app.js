@@ -127,6 +127,12 @@ app.post("/api/todos", validateToken, (req, res) => __awaiter(void 0, void 0, vo
     }
     res.status(200).send();
 }));
+app.get("/api/todos", validateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const todos = yield model_todo_1.todo.findOne({ user: req.user._id });
+    if (todos) {
+        return res.json({ items: todos.items });
+    }
+}));
 app.get("/register.html", (req, res) => {
     res.render("register");
 });
