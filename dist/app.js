@@ -38,16 +38,20 @@ mongoose.connect("mongodb://127.0.0.1:27017/testdb");
 const db = mongoose.connection;
 const app = (0, express_1.default)();
 const port = 3000;
+const multer_1 = __importDefault(require("multer"));
+const storage = multer_1.default.memoryStorage();
+const upload = (0, multer_1.default)({ storage: storage });
+app.use(upload.any());
+var path = require("path");
+app.use(express_1.default.static(path.join(__dirname, '../public')));
+app.set('views', path.join(__dirname, '../views'));
+app.set('view engine', 'pug');
 const parser = require("body-parser");
 var bcrypt = require("bcryptjs");
 app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: false }));
 app.use(parser.json());
 app.use(parser.urlencoded({ extended: true }));
-//app.use(session({
-//    secret: "761397281d629389589548a97a112d058250cfe13624dcb2aa9827036f0ff065",
-//    resave: false,
-//    saveUninitialized: false
-//}));
 app.use((0, express_session_1.default)({
     secret: process.env.SECRET,
     resave: false,
@@ -62,6 +66,8 @@ const pwdValidate = (0, express_validator_1.body)("password").isStrongPassword({
     minSymbols: 1
 });
 app.post("/api/user/register", emailValidate, pwdValidate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(req.body.email);
+    console.log(req.body.password);
     // Check if user exists
     let founduser = yield model_user_1.user.findOne({ email: req.body.email }).exec();
     if (founduser) {
@@ -121,39 +127,14 @@ app.post("/api/todos", validateToken, (req, res) => __awaiter(void 0, void 0, vo
     }
     res.status(200).send();
 }));
-//app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response) => {
-//    if (!req.session.user) {
-//        res.status(401).send("Unauthorized");
-//        return;
-//    }
-//
-//    const foundlist = todos.find(t => t.id === req.session.user.id);
-//    const todotext = req.body.todo;
-//
-//    if (!foundlist) {
-//        const newtodo: Todolist = {
-//            id: req.session.user.id,
-//            todos: [todotext],
-//        };
-//
-//        todos.push(newtodo);
-//    } else {
-//        foundlist.todos.push(todotext);
-//    }
-//
-//    res.status(200).send(todos.find(t => t.id === req.session.user.id));
-//});
-//
-//app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
-//    if (!req.session.user) {
-//        res.status(401).send("Unauthorized");
-//        return;
-//    }
-//
-//    res.send(todos);
-//});
+app.get("/register.html", (req, res) => {
+    res.render("register");
+});
+app.get("/login.html", (req, res) => {
+    res.render("login");
+});
 app.get("/", (req, res) => {
-    res.send("Hello world");
+    res.render("index");
 });
 app.listen(port, () => {
     return console.log(`Express is listening at http://localhost:${port}`);

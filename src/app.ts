@@ -41,20 +41,27 @@ const db = mongoose.connection;
 const app = express();
 const port = 3000;
 
-const parser = require("body-parser")
+import multer, { Multer, StorageEngine } from "multer";
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+app.use(upload.any());
+
+var path = require("path");
+
+app.use(express.static(path.join(__dirname, '../public')))
+
+app.set('views', path.join(__dirname, '../views'));
+app.set('view engine', 'pug');
+
+const parser = require("body-parser");
 
 var bcrypt = require("bcryptjs");
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 app.use(parser.json());
 app.use(parser.urlencoded({ extended: true }));
-
-//app.use(session({
-//    secret: "761397281d629389589548a97a112d058250cfe13624dcb2aa9827036f0ff065",
-//    resave: false,
-//    saveUninitialized: false
-//}));
-
 
 app.use(session({
     secret: process.env.SECRET,
@@ -72,11 +79,15 @@ const pwdValidate: ValidationChain = body("password").isStrongPassword({
 });
 
 app.post("/api/user/register", emailValidate, pwdValidate, async (req, res) => {
+    console.log(req.body.email);
+    console.log(req.body.password);
+
     // Check if user exists
     let founduser = await user.findOne({ email: req.body.email }).exec();
     if (founduser) {
         return res.status(403).json({ email: "Email already in use." });
     }
+
     
     // Check if validations were successful
     const validationError = validationResult(req);
@@ -152,40 +163,16 @@ app.post("/api/todos", validateToken, async (req: RequestUser, res) => {
     res.status(200).send();
 });
 
-//app.post("/api/todos", (req: Request & { session: CustomSession }, res: Response) => {
-//    if (!req.session.user) {
-//        res.status(401).send("Unauthorized");
-//        return;
-//    }
-//
-//    const foundlist = todos.find(t => t.id === req.session.user.id);
-//    const todotext = req.body.todo;
-//
-//    if (!foundlist) {
-//        const newtodo: Todolist = {
-//            id: req.session.user.id,
-//            todos: [todotext],
-//        };
-//
-//        todos.push(newtodo);
-//    } else {
-//        foundlist.todos.push(todotext);
-//    }
-//
-//    res.status(200).send(todos.find(t => t.id === req.session.user.id));
-//});
-//
-//app.get("/api/todos/list", (req: Request & { session: CustomSession }, res: Response) => {
-//    if (!req.session.user) {
-//        res.status(401).send("Unauthorized");
-//        return;
-//    }
-//
-//    res.send(todos);
-//});
+app.get("/register.html", (req, res) => {
+    res.render("register");
+});
+
+app.get("/login.html", (req, res) => {
+    res.render("login");
+});
 
 app.get("/", (req, res) => {
-  res.send("Hello world");
+    res.render("index");
 });
 
 app.listen(port, () => {

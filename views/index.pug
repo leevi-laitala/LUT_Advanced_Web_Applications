@@ -1,0 +1,16 @@
+extends layout
+
+block content
+    div#unregistered
+        a(href="/register.html").button Register
+        a(href="/login.html").button Login
+
+    div#registered
+        p.email
+        label(for="todo") Add Todo
+        input(type="text", name="todo").todo
+        h3 Todos:
+        ul.todoList
+
+    script(src="/javascript/index.js")
+        
