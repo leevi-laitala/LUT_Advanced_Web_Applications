@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "express": "^4.17.1",
+    "typescript": "^5.3.3"
+  },
+  "name": "advanced-web-appications",
+  "version": "1.0.0",
+  "main": "dist/app.js",
+  "scripts": {
+    "start": "tsc && node dist/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/express": "^4.17.1"
+  }
+}

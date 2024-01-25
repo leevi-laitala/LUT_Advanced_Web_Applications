@@ -1,0 +1,31 @@
+extends layout
+
+block content
+    nav
+        .nav-wrapper
+            a(href="#").brand-logo Jeerock
+
+    .container
+        .col
+            h1#recipe-name
+            h4 Ingredients
+            ul#ingredients-list
+            h4 Instructions
+            ul#instructions-list
+            
+        .col
+            h1 Add new recipe
+
+            h4 Ingredients
+            input(type="text")#name-text
+
+            textarea#ingredients-text
+            button(type="button")#add-ingredient.btn Add ingredient
+
+            h4 Instructions
+            textarea#instructions-text
+            button(type="button")#add-instruction.btn Add instruction
+
+            input(type='file', accept='image/*', multiple)#image-input
+
+            button(type="submit")#submit.btn Submit

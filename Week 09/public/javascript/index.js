@@ -35,6 +35,16 @@ const constructDocumentForRegistered = async() => {
     const email = document.createElement("a");
     email.id = "email";
 
+    const token = localStorage.getItem("auth_token");
+    const res = await fetch("/api/private", {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    const emailText = await res.json();
+    email.innerText = emailText.email;
+
+
+
     const inputField = document.createElement("input");
     inputField.id = "add-item";
     inputField.type = "text";

@@ -1,0 +1,23 @@
+extends layout
+
+block content
+  h1= title
+  label(for="input-name") Name:
+  input(type="text" id="input-name")
+
+  label(for="input-task") Task:
+  input(type="text" id="input-task")
+
+  button(type="submit" id="submit-data") Submit
+
+  div#return-message
+
+  h1 Search
+  input(type="text" id="search-name")
+  button(type="submit" id="search") Search
+  button(type="submit" id="delete-user" style="display: none") Delete user
+
+  p(id="found-name")
+
+  div(id="tasks")
+
